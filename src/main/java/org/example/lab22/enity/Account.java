@@ -1,18 +1,28 @@
-package org.example.lab22.model;
+package org.example.lab22.enity;
 
-import java.time.LocalDate;
+import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
+@Entity
+@Table( name = "account")
 public class Account {
-    private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @Column(name = "username", nullable = false)
     private String username;
+    @Column(name ="password",nullable = false)
     private String password;
+    @Column(name = "status")
     private boolean status;
-    private LocalDate createDate;
+    @Column(name = "creatDate")
+    private LocalDateTime createDate;
 
     public Account() {
     }
 
-    public Account(int id, String username, String password, boolean  status, LocalDate createDate) {
+    public Account(Long id, String username, String password, boolean  status, LocalDateTime createDate) {
         this.id = id;
         this.username = username;
         this.status = status;
@@ -20,11 +30,11 @@ public class Account {
         this.createDate = createDate;
     }
 
-    public int getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -50,11 +60,11 @@ public class Account {
         this.status = status;
     }
 
-    public LocalDate getCreateDate() {
+    public LocalDateTime getCreateDate() {
         return createDate;
     }
 
-    public void setCreateDate(LocalDate createDate) {
+    public void setCreateDate(LocalDateTime createDate) {
         this.createDate = createDate;
     }
 

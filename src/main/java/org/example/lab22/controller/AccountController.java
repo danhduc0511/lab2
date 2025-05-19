@@ -1,14 +1,14 @@
 package org.example.lab22.controller;
 
-import org.example.lab22.model.Account;
+import org.example.lab22.enity.Account;
 import org.example.lab22.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,45 +19,56 @@ public class AccountController {
     private AccountService accountService;
 
     @GetMapping
-    public ResponseEntity<List<Account>> getAllAccounts() throws SQLException {
+    public ResponseEntity<List<Account>> getAllAccounts(
+            @RequestParam(value = "pageSize", defaultValue = "20") Integer pageSize ,
+            @RequestParam(value = "pageNo",defaultValue = "0")Integer pageNo,
+            @RequestParam(value = "sortBy",defaultValue = "id")String sortBy,
+            @RequestParam(value = "sortDir",defaultValue = "asc")String sortDir
+    ) throws SQLException {
+        List<Account> accounts = accountService.getAllAccounts(pageSize,pageNo,sortBy,sortDir);
 
-        if (accountService.getAllAccounts().isEmpty()) {
+        if (accounts.isEmpty()) {
 
-            return new ResponseEntity<List<Account>>(Collections.emptyList(), HttpStatus.NO_CONTENT);
+            return  ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }
-        return new ResponseEntity<List<Account>>(accountService.getAllAccounts(), HttpStatus.OK);
+        return ResponseEntity.status(HttpStatus.OK).body(accounts);
     }
     @PostMapping
-    public ResponseEntity<Integer> addAccount(@RequestBody Account account) throws SQLException {
-        if(accountService.addAccount(account)>0){
-            return ResponseEntity.status(HttpStatus.CREATED).body(account.getId());
+    public ResponseEntity<Account> addAccount(@RequestBody Account account) throws SQLException {
+        if(accountService.addAccount(account)!=null) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(account);
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(-1);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Account) null);
 
     }
     @PutMapping("/{id}")
-    public ResponseEntity<Integer> updateAccount(@PathVariable("id") int id, @RequestBody Account account) throws SQLException {
-        int rows = accountService.updateAccount(id,account);
+    public ResponseEntity<Account> updateAccount(@PathVariable("id") Long id, @RequestBody Account account) throws SQLException {
+        Account account1 = accountService.updateAccount(id,account);
+        if(account1!=null) {
+            return ResponseEntity.status(HttpStatus.OK).body(account);
+        }
+        else return ResponseEntity.status(HttpStatus.BAD_REQUEST).body((Account) null);
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<Account> getAccount(@PathVariable("id") Long id) throws SQLException {
+        return accountService.getAccountById(id).map(account -> ResponseEntity.status(HttpStatus.OK).body(account)).
+                orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body((Account) null));
+
+
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Integer> deleteAccount(@PathVariable("id") Long id) throws SQLException {
+        int rows = accountService.deleteAccount(id);
         if(rows>0){
             return ResponseEntity.status(HttpStatus.OK).body(rows);
         }
-        else return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(-1);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(-1);
     }
-    @GetMapping("/{id}")
-    public ResponseEntity<Account> getAccount(@PathVariable("id") int id) throws SQLException {
-        Account account = accountService.getAccountById(id);
-        if(account!=null){
-            return ResponseEntity.status(HttpStatus.OK).body(account);
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    @GetMapping("/username/{username}")
+    public ResponseEntity<Account> getAccountByUsername(@PathVariable("username") String username) throws SQLException {
+        return accountService.getAccountByUsername(username).map(account -> ResponseEntity.ok(account)).
+                orElseGet(()->ResponseEntity.status(HttpStatus.NOT_FOUND).body((Account) null));
     }
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Integer> deleteAccount(@PathVariable("id") int id) throws SQLException {
-        int rows = accountService.deleteAccount(id);
-        if(rows>0){
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(rows);
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(-1);
-    }
+
 
 }
